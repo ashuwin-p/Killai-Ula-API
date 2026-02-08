@@ -1,14 +1,24 @@
 import os
+import subprocess
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from rag_modules.engine import AdvancedTourismEngine
 from rag_modules.bot import AdvancedBot
 from rag_modules.llm_client import GroqClient
 
-app = FastAPI(title="Tamil Nadu Tourism RAG API", version="1.0")
+app = FastAPI(title="Tourism RAG API", version="1.1")
+
+# --- CORS MIDDLEWARE (Fix for Browser Access) ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (for dev/demo). Lock this down in prod.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Config ---
-# Paths inside the Docker container
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data", "locations.csv")
 INDICES_DIR = os.path.join(BASE_DIR, "tourism_indices")
@@ -19,7 +29,7 @@ bot = None
 
 class QueryRequest(BaseModel):
     query: str
-    k: int = 5  # Default to 5, but user can change it
+    k: int = 5 
 
 class QueryResponse(BaseModel):
     response: str
@@ -31,32 +41,24 @@ def load_resources():
     global bot
     print("Loading RAG Engine...")
     
-    # 1. Initialize Engine
     if not os.path.exists(CSV_PATH):
         raise RuntimeError(f"Data file not found at {CSV_PATH}")
         
     engine = AdvancedTourismEngine(CSV_PATH, INDICES_DIR, DB_PATH)
     
-    # 2. Initialize LLM (Swap this class to change providers)
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         print("WARNING: GROQ_API_KEY not set. LLM generation will fail.")
         
     llm = GroqClient(api_key=api_key)
-    
-    # 3. Initialize Bot
     bot = AdvancedBot(engine, llm)
-
-    # To get the versions
-    import subprocess
-    print("--- INSTALLED PACKAGES ---")
-    print(subprocess.run(["pip", "freeze"], capture_output=True, text=True).stdout)
-    print("--------------------------")
-    
     print("System Ready.")
 
+# --- CONCURRENCY FIX: Removed 'async' ---
+# By using standard 'def', FastAPI runs this in a thread pool, 
+# preventing the synchronous LLM/Vector search from blocking other requests.
 @app.post("/chat", response_model=QueryResponse)
-async def chat_endpoint(request: QueryRequest):
+def chat_endpoint(request: QueryRequest):
     if not bot:
         raise HTTPException(status_code=503, detail="System starting up")
     
@@ -73,3 +75,8 @@ async def chat_endpoint(request: QueryRequest):
 @app.get("/")
 def health_check():
     return {"status": "active", "docs_url": "/docs"}
+
+@app.get("/sys/packages")
+def get_requirements():
+    result = subprocess.run(["pip", "freeze"], capture_output=True, text=True)
+    return {"packages": result.stdout.split("\n")}
