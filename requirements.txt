@@ -8,3 +8,4 @@ networkx
 groq
 openpyxl
 python-dotenv
+nltk
