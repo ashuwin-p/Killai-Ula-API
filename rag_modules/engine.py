@@ -4,9 +4,9 @@ from sentence_transformers import CrossEncoder
 from typing import List, Dict, Any
 
 # Relative imports for the package structure
-from .bm25l import RobustBM25L
-from .dense_retriever import DenseRetriever
-from .tourism_graph import TourismGraph
+from rag_modules.bm25l import RobustBM25L
+from rag_modules.dense_retriever import DenseRetriever
+from rag_modules.tourism_graph import TourismGraph
 
 class AdvancedTourismEngine:
     def __init__(self, file_path: str, indices_dir: str, db_path: str):
