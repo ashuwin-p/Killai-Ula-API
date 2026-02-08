@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pandas
+chromadb
+sentence-transformers
+rank_bm25
+networkx
+groq
+openpyxl
+python-dotenv
