@@ -5,7 +5,7 @@ from rag_modules.engine import AdvancedTourismEngine
 from rag_modules.bot import AdvancedBot
 from rag_modules.llm_client import GroqClient
 
-app = FastAPI(title="Tourism RAG API", version="1.0")
+app = FastAPI(title="Tamil Nadu Tourism RAG API", version="1.0")
 
 # --- Config ---
 # Paths inside the Docker container
@@ -46,6 +46,13 @@ def load_resources():
     
     # 3. Initialize Bot
     bot = AdvancedBot(engine, llm)
+
+    # To get the versions
+    import subprocess
+    print("--- INSTALLED PACKAGES ---")
+    print(subprocess.run(["pip", "freeze"], capture_output=True, text=True).stdout)
+    print("--------------------------")
+    
     print("System Ready.")
 
 @app.post("/chat", response_model=QueryResponse)
