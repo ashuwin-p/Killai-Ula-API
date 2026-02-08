@@ -8,7 +8,7 @@ class LLMClient:
         raise NotImplementedError
 
 class GroqClient(LLMClient):
-    def __init__(self, api_key: str = None, model: str = "meta-llama/llama-3.3-70b-versatile"):
+    def __init__(self, api_key: str = None, model: str = "meta-llama/llama-4-scout-17b-16e-instruct"):
         try:
             from groq import Groq, RateLimitError
             self.Groq = Groq
